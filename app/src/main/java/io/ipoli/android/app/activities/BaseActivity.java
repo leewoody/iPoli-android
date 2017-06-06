@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.afollestad.aesthetic.Aesthetic;
 import com.squareup.otto.Bus;
 
 import org.threeten.bp.LocalDate;
@@ -49,8 +50,21 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        Aesthetic.attach(this);
         appComponent().inject(this);
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Aesthetic.resume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        Aesthetic.pause(this);
+        super.onPause();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.ipoli.android;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,6 +24,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.aesthetic.Aesthetic;
+import com.afollestad.aesthetic.BottomNavBgMode;
+import com.afollestad.aesthetic.BottomNavIconTextMode;
+import com.afollestad.aesthetic.NavigationViewMode;
 import com.google.android.gms.appinvite.AppInviteInvitation;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
@@ -180,6 +185,22 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         };
 
         drawerLayout.addDrawerListener(actionBarDrawerToggle);
+
+//        if (Aesthetic.isFirstTime()) {
+            Aesthetic.get()
+                    .activityTheme(R.style.Theme_iPoli)
+                    .textColorPrimaryRes(R.color.md_dark_text_87)
+                    .textColorSecondaryRes(R.color.md_dark_text_54)
+                    .colorPrimaryRes(R.color.md_white)
+                    .colorAccentRes(R.color.colorAccent)
+                    .colorStatusBarAuto()
+                    .colorNavigationBarAuto()
+                    .textColorPrimary(Color.BLACK)
+                    .navigationViewMode(NavigationViewMode.SELECTED_ACCENT)
+                    .bottomNavigationBackgroundMode(BottomNavBgMode.PRIMARY)
+                    .bottomNavigationIconTextMode(BottomNavIconTextMode.SELECTED_ACCENT)
+                    .apply();
+//        }
     }
 
     private boolean shouldMigratePlayer() {
