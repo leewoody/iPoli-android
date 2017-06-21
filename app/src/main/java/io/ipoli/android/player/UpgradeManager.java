@@ -41,12 +41,11 @@ public class UpgradeManager implements OnDataChangedListener<Player> {
     }
 
     public boolean isUnlocked(Upgrade upgrade) {
-        return true;
-//        Player player = getPlayer();
-//        if (player.getInventory() == null) {
-//            return false;
-//        }
-//        return player.getInventory().getUpgrades().containsKey(upgrade.code);
+        Player player = getPlayer();
+        if (player.getInventory() == null) {
+            return false;
+        }
+        return player.getInventory().getUpgrades().containsKey(upgrade.code);
     }
 
     public boolean hasEnoughCoinsForUpgrade(Upgrade upgrade) {

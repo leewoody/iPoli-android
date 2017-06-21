@@ -368,7 +368,11 @@ public class SignInActivity extends BaseActivity implements GoogleApiClient.OnCo
 
         player.getInventory().addAvatar(Constants.DEFAULT_PLAYER_AVATAR, LocalDate.now());
         player.getInventory().addPet(Constants.DEFAULT_PET_AVATAR, LocalDate.now());
-        player.getInventory().addUpgrade(Upgrade.REPEATING_QUESTS, LocalDate.now());
+//        player.getInventory().addUpgrade(Upgrade.REPEATING_QUESTS, LocalDate.now());
+
+        for (Upgrade upgrade : Upgrade.values()) {
+            player.getInventory().addUpgrade(upgrade, LocalDate.now());
+        }
 
         if (authProvider != null) {
             player.setCurrentAuthProvider(authProvider);
