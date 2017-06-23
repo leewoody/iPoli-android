@@ -934,6 +934,7 @@ public class AmplitudeAnalyticsService implements AnalyticsService {
 
     @Subscribe
     public void onAppError(AppErrorEvent e) {
+        e.exception.printStackTrace();
         FirebaseCrash.report(e.exception);
         log("app_error", EventParams.create()
                 .add("message", e.exception.getMessage())

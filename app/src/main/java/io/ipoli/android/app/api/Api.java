@@ -56,6 +56,7 @@ public class Api {
         params.put("player_id", App.getPlayerId());
 
         JSONObject jsonObject = new JSONObject(params);
+        System.out.println(jsonObject.toString());
         RequestBody body = RequestBody.create(JSON, jsonObject.toString());
 
         Request.Builder builder = new Request.Builder();

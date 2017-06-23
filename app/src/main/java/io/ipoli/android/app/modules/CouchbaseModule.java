@@ -29,7 +29,9 @@ public class CouchbaseModule {
             if (BuildConfig.DEBUG) {
                 Manager.enableLogging("CouchDb", Log.VERBOSE);
             }
-            return manager.getDatabase("ipoli_db");
+            Database db = manager.getDatabase("ipoli_db");
+            db.setMaxRevTreeDepth(2);
+            return db;
         } catch (Exception e) {
             e.printStackTrace();
             FirebaseCrash.report(new RuntimeException("Unable to create/get database", e));

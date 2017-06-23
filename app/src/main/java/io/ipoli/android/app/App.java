@@ -14,10 +14,17 @@ import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.amplitude.api.Amplitude;
+import com.couchbase.lite.CouchbaseLiteException;
 import com.couchbase.lite.Database;
+import com.couchbase.lite.Query;
+import com.couchbase.lite.QueryEnumerator;
+import com.couchbase.lite.QueryRow;
+import com.couchbase.lite.SavedRevision;
+import com.couchbase.lite.UnsavedRevision;
 import com.couchbase.lite.replicator.Replication;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -329,15 +336,15 @@ public class App extends MultiDexApplication {
         playerId = localStorage.readString(Constants.KEY_PLAYER_ID);
 
         int firebaseSchemaVersion = localStorage.readInt(Constants.KEY_SCHEMA_VERSION);
-        if(firebaseSchemaVersion > 0 && firebaseSchemaVersion <= Constants.FIREBASE_LAST_SCHEMA_VERSION) {
+        if (firebaseSchemaVersion > 0 && firebaseSchemaVersion <= Constants.FIREBASE_LAST_SCHEMA_VERSION) {
             return;
         }
-        if(hasPlayer()) {
+        if (hasPlayer()) {
             Player player = playerPersistenceService.get();
-            if(player == null) {
+            if (player == null) {
                 return;
             }
-            if(player.getSchemaVersion() != Constants.SCHEMA_VERSION) {
+            if (player.getSchemaVersion() != Constants.SCHEMA_VERSION) {
                 return;
             }
         }
@@ -352,6 +359,52 @@ public class App extends MultiDexApplication {
 
         initReplication();
         initAppStart();
+//
+        Query query = database.createAllDocumentsQuery();
+        query.setAllDocsMode(Query.AllDocsMode.ONLY_CONFLICTS);
+        try {
+            QueryEnumerator enumerator = query.run();
+            while (enumerator.hasNext()) {
+                QueryRow row = enumerator.next();
+                List<SavedRevision> conflictRevs = row.getConflictingRevisions();
+                Map<String, Object> latestDocProps = findLatestDocProps(conflictRevs);
+                SavedRevision current = row.getDocument().getCurrentRevision();
+                for (SavedRevision rev : conflictRevs) {
+                    UnsavedRevision newRev = rev.createRevision();
+                    if (rev.getId().equals(current.getId())) {
+                        newRev.setProperties(latestDocProps);
+                    } else {
+                        newRev.setIsDeletion(true);
+                    }
+                    // saveAllowingConflict allows 'rev' to be updated even if it
+                    // is not the document's current revision.
+                    newRev.save(true);
+                }
+//                for (SavedRevision rev : row.getConflictingRevisions()) {
+//                    Log.d("Hellow", rev.getProperties().toString());
+//                    Log.d("Hellow", rev.getSequence() + "");
+//                }
+//                Log.d("Hellow", row.asJSONDictionary().toString());
+//                Log.d("Hellow", row.getDocumentProperties().toString());
+            }
+        } catch (CouchbaseLiteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Map<String, Object> findLatestDocProps(List<SavedRevision> conflictRevs) {
+        Map<String, Object> result = new HashMap<>();
+        long lastUpdateTime = 0;
+        for (SavedRevision rev : conflictRevs) {
+            Map<String, Object> revProps = rev.getUserProperties();
+            Long updatedAt = Long.valueOf(revProps.get("updatedAt").toString());
+            if (updatedAt > lastUpdateTime) {
+                Log.d("Hellow", revProps.toString());
+                lastUpdateTime = updatedAt;
+                result = revProps;
+            }
+        }
+        return result;
     }
 
     @Subscribe
@@ -524,6 +577,13 @@ public class App extends MultiDexApplication {
             List<String> channels = new ArrayList<>();
             channels.add(playerId);
             pull.setChannels(channels);
+//            pull.addChangeListener(new Replication.ChangeListener() {
+//                @Override
+//                public void changed(Replication.ChangeEvent changeEvent) {
+//                    changeEvent.getStatus() == Replication.ReplicationStatus.REPLICATION_STOPPED
+//                            // check for conflicts
+//                }
+//            });
 
             Replication push = database.createPushReplication(urlProvider.sync());
             for (Cookie cookie : cookies) {
@@ -992,7 +1052,7 @@ public class App extends MultiDexApplication {
 
     @Subscribe
     public void onScreenShown(ScreenShownEvent e) {
-        if(e.activity != null) {
+        if (e.activity != null) {
             FirebaseAnalytics.getInstance(this).setCurrentScreen(e.activity, e.source.name(), null);
         }
     }
